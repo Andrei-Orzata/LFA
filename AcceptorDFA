@@ -1,0 +1,102 @@
+/*
+Citeste si verifica daca un cuvant:
+
+Formatul de implementare a "AcceptorDFA.in"
+
+
+  n m
+  alfabet(ex: abcdef...)
+  q0
+  k
+  X0 X1 ... Xk
+  l
+  x0 a0 y0
+  x1 a1 y0
+  .
+  .
+  .
+  xl al yl
+  
+  n - Nr.maxim de stari
+  m - Nr.elemente din alfabet
+  q0 - stadiul initial
+  k - Nr.de stari finale (X1,X2... - Stari finale)
+  l- Nr.de tranzitii
+
+
+
+
+*/
+
+#include <iostream>
+#include <fstream>
+#include <cstring>
+
+using namespace std;
+ifstream in("AcceptorDFA.in");
+
+int Tabel_Tranzitii[100][255];
+bool Stari_finale[100];
+char input[10000];
+
+int poz(char* alfa,char x)
+{
+    for(int i=0; i<strlen(alfa); i++)
+        if(x==alfa[i])
+            return i;
+}
+
+int main()
+{
+
+    int n,m,q0,k,l,x,y,i,j,stare;
+    char alfabet[255],a;
+
+    in>>n>>m;
+    in.get();
+    in.getline(alfabet,255);
+
+    in>>q0;
+    in>>k;
+
+    for(i=0; i<k; i++)
+    {
+        in>>x;
+        Stari_finale[x]=true;
+
+    }
+    in>>l;
+    for(i=0; i<l; i++)
+    {
+        in>>x>>a>>y;
+        Tabel_Tranzitii[x][poz(alfabet,a)]=y;
+    }
+
+    for(i=0; i<n; i++)
+        for(j=0; j<m; j++)
+            if(Tabel_Tranzitii[i][j] < 0 || Tabel_Tranzitii[i][j] >= n)
+            {
+                cout<<"DFA nu este bine definit.\n";
+            }
+
+
+    while(input)
+    {
+        cout<<"Introduceti un cuvant: ";
+        cin.getline(input,10000);
+        cout<<endl;
+        stare=q0;
+        for(i=0; i<strlen(input); i++)
+            if(strchr(alfabet,input[i])==NULL)
+                cout<<"S-a introdus un simbol gresit.\n";
+            else
+                stare=Tabel_Tranzitii[stare][poz(alfabet,input[i])];
+
+        if(Stari_finale[stare])
+            cout<<"Cuvant acceptat.\n";
+        else
+            cout<<"Cuvant respins.\n";
+
+    }
+    return 0;
+}
