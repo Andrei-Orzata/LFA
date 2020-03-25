@@ -1,6 +1,4 @@
 /*
-Citeste si verifica daca un cuvant:
-
 Formatul de implementare a "AcceptorDFA.in"
 
 
@@ -19,7 +17,7 @@ Formatul de implementare a "AcceptorDFA.in"
   
   n - Nr.maxim de stari
   m - Nr.elemente din alfabet
-  q0 - stadiul initial
+  q0 - starea initial
   k - Nr.de stari finale (X1,X2... - Stari finale)
   l- Nr.de tranzitii
 
