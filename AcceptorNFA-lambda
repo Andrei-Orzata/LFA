@@ -1,0 +1,147 @@
+Formatul de implementare a "AcceptorNFA-lambda.in"
+
+  n m
+  alfabet(ex: abcdef...)
+  q0
+  k
+  X0 X1 ... Xk
+  l
+  x0 a0 y0
+  x1 a1 y0
+  .
+  .
+  .
+  xl al yl
+  
+  n - Nr.maxim de stari
+  m - Nr.elemente din alfabet
+  q0 - starea initial
+  k - Nr.de stari finale (X1,X2... - Stari finale)
+  l- Nr.de tranzitii
+
+
+*/
+
+#include <iostream>
+#include <fstream>
+#include <cstring>
+
+using namespace std;
+ifstream in("AcceptorNFA-lambda.in");
+
+struct Tranzitie
+{
+    int St_initiala,St_finala;
+};
+
+struct Trans_v
+{
+    int nr_tranzitii=0;
+    Tranzitie Vector_Tranziti[100000];
+};
+
+Tranzitie Trans_lambda[100000];
+Trans_v transitions[100];
+bool Stari_finale[100];
+char input[10000];
+bool ok=false;
+
+int poz(char* alfa, char x)
+{
+    for(int i=0; i<strlen(alfa); i++)
+        if(x==alfa[i])
+            return i;
+};
+
+void verif(Trans_v transitions[100], char* input, char* alfa, int i, int stare)
+{
+    if(Stari_finale[stare]&&i==strlen(input))
+        ok=true;
+    else
+        for(int j=0; j<transitions[poz(alfa,input[i])].nr_tranzitii; j++)
+        {
+            if(transitions[poz(alfa,input[i])].Vector_Tranziti[j].St_initiala==stare)
+                verif(transitions,input,alfa,++i,transitions[poz(alfa,input[i])].Vector_Tranziti[j].St_finala);
+        }
+}
+int main()
+{
+
+    int n,m,q0,k,l,x,y,i,j,stare,nr_lambda=0;
+    char alfabet[255],a;
+
+
+    in>>n>>m;
+    in.get();
+    in.getline(alfabet,255);
+
+    in>>q0;
+    in>>k;
+
+    for(i=0; i<k; i++)
+    {
+        in>>x;
+        Stari_finale[x]=true;
+
+    }
+
+    in>>l;
+    for(i=0; i<l; i++)
+    {
+
+        in>>x>>a>>y;
+        if(a=='$')
+        {
+            Trans_lambda[nr_lambda].St_initiala=x;
+            Trans_lambda[nr_lambda].St_finala=y;
+            nr_lambda++;
+        }
+        else
+        {
+            int nr=transitions[poz(alfabet,a)].nr_tranzitii;
+            transitions[poz(alfabet,a)].Vector_Tranziti[nr].St_initiala=x;
+            transitions[poz(alfabet,a)].Vector_Tranziti[nr].St_finala=y;
+            transitions[poz(alfabet,a)].nr_tranzitii++;
+        }
+    }
+    for(i=0; i<nr_lambda; i++)
+    {
+        for(j=0; j<m; j++)
+        {
+            int nr=transitions[j].nr_tranzitii;
+            for(k=0; k<nr; k++)
+            {
+                if(Trans_lambda[i].St_finala==transitions[j].Vector_Tranziti[k].St_initiala)
+                {
+                    transitions[j].Vector_Tranziti[nr].St_initiala=Trans_lambda[i].St_initiala;
+                    transitions[j].Vector_Tranziti[nr].St_finala=transitions[j].Vector_Tranziti[k].St_finala;
+                    transitions[j].nr_tranzitii++;
+                }
+                if(Trans_lambda[i].St_initiala==transitions[j].Vector_Tranziti[k].St_finala)
+                {
+                    transitions[j].Vector_Tranziti[nr].St_initiala=transitions[j].Vector_Tranziti[k].St_initiala;
+                    transitions[j].Vector_Tranziti[nr].St_finala=Trans_lambda[i].St_finala;
+                    transitions[j].nr_tranzitii++;
+                }
+                nr=transitions[j].nr_tranzitii;
+            }
+
+
+        }
+
+    }
+
+    while(input)
+    {
+        cout<<"Introduceti un cuvant: ";
+        cin.getline(input,10000);
+        cout<<endl;
+        verif(transitions,input,alfabet,0,q0);
+        if(ok)
+            cout<<"Cuvant acceptat.\n";
+        else
+            cout<<"Cuvant respins.\n";
+
+    }
+    return 0;
+}
