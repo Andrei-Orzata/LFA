@@ -1,0 +1,108 @@
+f = open("date.in")
+import queue
+Neterminali = [x for x in f.readline().split()]
+Terminali = str(f.readline())
+Gramatica = {}
+
+
+lines = f.readlines()
+for line in lines:
+    Gramatica[line[0]] = line[2:].strip('\n').split(' ')
+
+print("||Initial||",Gramatica)
+
+areLambda = True
+while areLambda:
+    areLambda = False
+    for key in Neterminali:
+        if '$' in Gramatica[key]:
+            areLambda = True
+            if len(Gramatica[key]) == 1:
+                del Gramatica[key]
+                Neterminali.remove(key)
+                for i in Neterminali:
+                    for j in Gramatica[i]:
+                        if key in j and len(j) == 1:
+                            Gramatica[i].remove(j)
+                            Gramatica[j].append('$')
+                        elif key in j :
+                            Gramatica[i].remove(j)
+                            Gramatica[j].append(j.replace(key,'$'))
+            else:
+
+                Gramatica[key].remove('$')
+                for i in Neterminali:
+                    for j in Gramatica[i]:
+                        if key in j and len(j)>1:
+                            if j.replace(key,'',1) not in Gramatica[i]:
+                                Gramatica[i].append(j.replace(key,'',1))
+
+
+print("||PAS I||",Gramatica)
+
+
+for key in Gramatica:
+    for i in range(len(Gramatica[key])):
+        if len(Gramatica[key][i]) == 1 and Gramatica[key][i][0] in Neterminali:
+            if key != Gramatica[key][i]:
+                for k in Gramatica[Gramatica[key][i]]:
+                    if k not in Gramatica[key]:
+                        Gramatica[key].append(k)
+            Gramatica[key].remove(Gramatica[key][i])
+
+print("||PAS II||",Gramatica)
+
+Vizitate = { x:False for x in Neterminali}
+Vizitate['S'] = True
+for i in Gramatica['S']:
+    for j in Neterminali:
+        if j in i:
+            Vizitate[j] = True
+
+for i in Neterminali:
+    for j in Gramatica[i]:
+        if i in j and len(j.strip(Terminali)) == 1 and len(Gramatica[i]) == 1:
+            print(j.strip(Terminali))
+            Vizitate[i]=False
+
+
+for i in Neterminali:
+    if Vizitate[i] == False:
+        del Gramatica[i]
+        Neterminali.remove(i)
+        for j in Neterminali:
+            for k in Gramatica[j]:
+                if i in k:
+                    Gramatica[j].remove(k)
+
+print("||PAS III||",Gramatica)
+
+for i in Neterminali:
+    for j in Gramatica[i]:
+        for term in Terminali:
+            if term in j and len(j) != 1:
+                Gramatica[term.upper()] = term
+                if term.upper() not in Neterminali:
+                    Neterminali.append(term.upper())
+                Gramatica[i].remove(j)
+                Gramatica[i].append(j.replace(term,term.upper()))
+
+print("||PAS IV||",Gramatica)
+
+aux= 'M'
+for i in Neterminali:
+    for j in Gramatica[i]:
+            if len(j) > 2:
+                string = j[1:]
+                for x in Neterminali:
+                    for y in Gramatica[x]:
+                        if string in y and len(y) > 2:
+                            Gramatica[x].remove(y)
+                            Gramatica[x].append(y.replace(string,aux))
+                Gramatica[aux]=string
+                Neterminali.append(aux)
+                aux =chr(ord(aux) + 1)
+
+
+print("||PAS V||",Gramatica)
+print(Neterminali)
