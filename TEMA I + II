@@ -1,0 +1,245 @@
+def reunit(a, b):
+    return list(set(a) | set(b))
+
+def VerifDFA (stare,string):
+    global stari_finale
+    global transitions
+    for i in string:
+        stare=transitions[i][stare]
+    if stare in stari_finale:
+        return True
+    else:
+        return False
+
+ok = False
+def VerifNFA (i,stare,string):
+    global ok
+    global transitions
+    if i == len(string) and (stare in stari_finale):
+        ok=True
+    else:
+        if i < len(string)  and transitions[string[i]][stare] != []:
+            for j in transitions[string[i]][stare]:
+                VerifNFA(i+1,j,string)
+        if transitions["$"][stare] != []:
+            for j in transitions["$"][stare]:
+                VerifNFA(i,j,string)
+
+
+def TestDFA():
+    string=""
+    while string!="exit":
+        string=input("Introduce cuvantul:")
+        stare=input("Introduce starea initiala:")
+        if VerifDFA(stare,string):
+            print("Acceptat!")
+        else:
+            print("Respins!")
+
+def TestNFA():
+    string=""
+    while string!="exit":
+        string=input("Introduce cuvantul:")
+        stare=input("Introduce starea initiala:")
+        VerifNFA(0,stare,string)
+        if ok == True:
+            print("Acceptat!")
+        else:
+            print("Respins!")
+
+
+def lNFA_to_NFA():
+    global transitions
+    global stari_finale
+    global alfabet
+    global nr_stari
+    for  i in range(nr_stari):
+        transitions["$"][i]=reunit(transitions["$"][i],[i])
+        for j in range(nr_stari):
+                if (j in transitions["$"][i]):
+                    transitions["$"][i]=reunit(transitions["$"][i],transitions["$"][j])
+
+    for i in range(nr_stari):
+        if(transitions["$"][i] != []):
+            for j in alfabet:
+                for k in range(nr_stari):
+                    if(i in transitions[j][k]):
+                        transitions[j][k]=reunit(transitions[j][k],transitions["$"][i])
+                    if(transitions[j][k] is not [] and k in transitions["$"][i]):
+                        transitions[j][i]=reunit(transitions[j][i],transitions[j][k])
+    del transitions["$"]
+    print("||Lambda-NFA to NFA||")
+    print(stari_finale)
+    for i in transitions:
+        print(i, transitions[i])
+
+
+def NFA_to_DFA():
+    global transitions
+    global nr_stari
+    global alfabet
+    global stari_finale
+
+    dfa_transitions={}
+    for i in alfabet:
+        dfa_transitions[i]={}
+    q=[0]
+    for i in q:
+        for j in alfabet:
+            if type(i) is int:
+                if len(transitions[j][i]) == 1:
+                    element=transitions[j][i][0]
+                    if element not in q:
+                        q.append(element)
+                    dfa_transitions[j][i]=element
+                if len(transitions[j][i]) >1:
+                    element=tuple(transitions[j][i])
+                    if element not in q:
+                        q.append(element)
+                    dfa_transitions[j][i]=element
+
+            if type(i) is tuple:
+                elements=[]
+                for x in i:
+                    elements=reunit(elements,transitions[j][x])
+                if len(elements) == 1:
+                    element=elements[0]
+                    if element not in q:
+                        q.append(element)
+                    dfa_transitions[j][i]=element
+                if len(elements) >1:
+                    element=tuple(elements)
+                    if element not in q:
+                        q.append(element)
+                    dfa_transitions[j][i]=element
+    transitions=dfa_transitions
+    for i in q:
+        if type(i) is tuple:
+            for j in stari_finale:
+                if j in i:
+                    stari_finale.append(i)
+    print("||NFA to DFA||")
+    print(stari_finale)
+    for i in transitions:
+        print(i, transitions[i])
+
+
+def DFA_to_DFAmin():
+    global transitions
+    global nr_stari
+    global alfabet
+    global stari_finale
+    matrix=[[1]* nr_stari for i in range(nr_stari)]
+    minimal={}
+    stari_minim=[]
+    for i in alfabet:
+        minimal[i]={}
+
+    for q in range(nr_stari):
+        for r in range(nr_stari):
+            if q > r:
+                matrix[q][r] = 1
+
+    for q in range(nr_stari):
+        for r in range(nr_stari):
+            if q > r:
+                if (q in stari_finale and r not in stari_finale) or (r in stari_finale and q not in stari_finale):
+                    matrix[q][r] = 0
+    aux=matrix
+    while True:
+        for q in range(nr_stari):
+            for r in range(nr_stari):
+                if q > r:
+                    ok=1
+                    for i in alfabet:
+                        if (matrix[transitions[i][q]][transitions[i][r]]==0):
+                            ok=0
+                    if ok == 0:
+                        matrix[q][r]=0
+        if aux==matrix:
+            break
+    for q in range(nr_stari):
+        for r in range(nr_stari):
+            if q > r:
+                if matrix[q][r] == 1:
+                    ok=0
+                    if stari_minim != []:
+                        for i in stari_minim:
+                            if (q in i) or (r in i):
+                                lis=reunit(i,[q,r])
+                                stari_minim.remove(i)
+                                stari_minim.append(lis)
+                                ok=1
+                    if ok == 0:
+                        stari_minim.append([q,r])
+
+    for nr in range(nr_stari):
+        ok = 1
+        for i in stari_minim:
+            if nr in i:
+                ok=0
+        if ok == 1:
+            stari_minim.append([nr])
+    for i in stari_minim:
+        for j in alfabet:
+            elements = []
+            for x in i:
+                elements = reunit(elements, [transitions[j][x]])
+            for k in stari_minim:
+                if elements[0] in k:
+                    if len(k)==1 and len(i)==1:
+                        minimal[j][i[0]]=k[0]
+                    elif len(k)==1:
+                        minimal[j][tuple(i)]=k[0]
+                    elif len(i)==1:
+                        minimal[j][i[0]]=tuple(k)
+                    else:
+                        minimal[j][tuple(i)]=tuple(k)
+    transitions=minimal
+    final=[]
+    for i in stari_finale:
+        for j in stari_minim:
+            if (i in j) and (j not in final):
+                final.append(j)
+    stari_finale=final
+    print("||DFA to DFA minimal||")
+    print(stari_finale)
+    for i in transitions:
+        print(i, transitions[i])
+
+
+f=open("test.in","r")
+transitions={}
+nr_stari=int(f.readline())
+alfabet=f.readline().strip("\n")
+stari_finale=[]
+for i in f.readline().split():
+    nr=int(i)
+    stari_finale.append(nr)
+
+
+
+for i in alfabet:
+        transitions[i]={}
+for i in alfabet:
+    for j in range (nr_stari):
+        transitions[i][j]=[]
+
+transitions["$"]={}
+for j in range (nr_stari):
+    transitions["$"][j]=[]
+
+
+lines=f.readlines()
+for line in lines:
+    x=int(line[0])
+    a=line[2]
+    y=int(line[4])
+    transitions[a][x].append(y)
+
+f.close()
+for i in transitions:
+    print(i, transitions[i])
+lNFA_to_NFA()
+NFA_to_DFA()
+DFA_to_DFAmin()
